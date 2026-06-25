@@ -1,7 +1,8 @@
 import { useState, useCallback } from "preact/hooks";
-import { Plus, Trash2, Edit3, Sparkles } from "lucide-preact";
-import type { Design, Template } from "../types";
+import { Plus, Trash2, Edit3, Sparkles, FileDown, ImageDown } from "lucide-preact";
+import type { Design, DesignWithPages, Template } from "../types";
 import { api } from "../api";
+import { exportDesignFile, exportDesignImages } from "../export-training";
 import { TemplateCard } from "./template-card";
 
 interface HomeProps {
@@ -25,6 +26,7 @@ export function Home({
 }: HomeProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const handleCreate = useCallback(async () => {
     const id = await createDesign();
@@ -48,6 +50,32 @@ export function Home({
   const finishRename = () => {
     if (editingId && editName.trim()) renameDesign(editingId, editName.trim());
     setEditingId(null);
+  };
+
+  const exportDesignFileClick = async (id: string, e: Event) => {
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const design = await api<DesignWithPages>("GET", `/api/designs/${id}`);
+      exportDesignFile(design);
+    } catch (error) {
+      console.error("Failed to export design file:", error);
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const exportDesignImagesClick = async (id: string, e: Event) => {
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const design = await api<DesignWithPages>("GET", `/api/designs/${id}`);
+      await exportDesignImages(design);
+    } catch (error) {
+      console.error("Failed to export design images:", error);
+    } finally {
+      setExportingId(null);
+    }
   };
 
   return (
@@ -155,6 +183,22 @@ export function Home({
                           </p>
                         </div>
                         <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                          <button
+                            class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-700 transition-colors"
+                            disabled={exportingId === d.id}
+                            onClick={(e) => exportDesignFileClick(d.id, e)}
+                            title="Export JSON"
+                          >
+                            <FileDown size={12} />
+                          </button>
+                          <button
+                            class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-700 transition-colors"
+                            disabled={exportingId === d.id}
+                            onClick={(e) => exportDesignImagesClick(d.id, e)}
+                            title="Export PNG"
+                          >
+                            <ImageDown size={12} />
+                          </button>
                           <button
                             class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-700 transition-colors"
                             onClick={(e) => startRename(d.id, d.name, e)}

@@ -34,6 +34,10 @@ export function RightSidebar() {
   const isText = selectedObject instanceof fabric.Textbox || selectedObject instanceof fabric.IText;
   const isImage = selectedObject instanceof fabric.FabricImage;
   const isShape = selectedObject && !isText && !isImage;
+  const rectRadiusMax =
+    selectedObject instanceof fabric.Rect
+      ? Math.round(Math.min(selectedObject.width || 0, selectedObject.height || 0) / 2)
+      : 0;
 
   if (!selectedObject) {
     return (
@@ -329,11 +333,12 @@ export function RightSidebar() {
                 <input
                   type="range"
                   min="0"
-                  max="100"
+                  max={rectRadiusMax}
+                  step="1"
                   class="w-full accent-accent"
                   value={(selectedObject as any).rx || 0}
                   onInput={(e) => {
-                    const val = parseInt((e.target as HTMLInputElement).value);
+                    const val = parseInt((e.target as HTMLInputElement).value, 10) || 0;
                     updateSelectedObject({ rx: val, ry: val });
                   }}
                 />

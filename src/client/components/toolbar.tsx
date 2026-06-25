@@ -26,10 +26,12 @@ export function Toolbar() {
     zoomToFit,
     zoomIn,
     zoomOut,
-    exportPNG,
+    exportDesignFileData,
+    exportDesignImageFiles,
     saveDesign,
     saving,
     activeDesign,
+    pages,
     renameDesign,
     navigate,
   } = useEditor();
@@ -178,11 +180,21 @@ export function Toolbar() {
 
         <button
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-semibold border border-zinc-300 cursor-pointer transition-all bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-          onClick={exportPNG}
-          title="Export as PNG"
+          onClick={() => activeDesign && exportDesignFileData(activeDesign, pages)}
+          disabled={!activeDesign || pages.length === 0}
+          title="Export JSON"
         >
           <Download size={13} />
-          Export
+          Export JSON
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-semibold border border-zinc-300 cursor-pointer transition-all bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50"
+          onClick={() => activeDesign && exportDesignImageFiles(activeDesign, pages)}
+          disabled={!activeDesign || pages.length === 0}
+          title="Export PNG"
+        >
+          <Download size={13} />
+          Export PNG
         </button>
         <button
           class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-md text-[11px] font-semibold border-none cursor-pointer transition-all bg-accent text-white hover:bg-accent-hover disabled:opacity-50"

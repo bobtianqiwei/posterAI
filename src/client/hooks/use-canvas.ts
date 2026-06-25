@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "preact/hooks";
 import * as fabric from "fabric";
-import type { Template } from "../types";
+import type { Design, Page, Template } from "../types";
+import { exportDesignFile, exportDesignImages } from "../export-training";
 
 const MAX_HISTORY = 50;
 
@@ -28,6 +29,7 @@ export function useCanvasState() {
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const activeCanvasIdRef = useRef<string | null>(null);
   const [selectedObject, setSelectedObject] = useState<fabric.FabricObject | null>(null);
+  const [, setObjectRevision] = useState(0);
   const [canvasWidth, setCanvasWidth] = useState(1080);
   const [canvasHeight, setCanvasHeight] = useState(1080);
   const [zoom, setZoom] = useState(0.58);
@@ -176,8 +178,8 @@ export function useCanvasState() {
             top: cy - 75,
             width: 150,
             height: 150,
-            rx: 8,
-            ry: 8,
+            rx: 0,
+            ry: 0,
             ...SHAPE_DEFAULTS,
           });
           break;
@@ -282,9 +284,11 @@ export function useCanvasState() {
       const pageId = activeCanvasIdRef.current;
       if (!canvas || !selectedObject || !pageId) return;
       selectedObject.set(props as Partial<fabric.FabricObject>);
+      selectedObject.setCoords();
+      selectedObject.dirty = true;
       canvas.requestRenderAll();
       saveHistory(pageId);
-      setSelectedObject({ ...selectedObject } as fabric.FabricObject);
+      setObjectRevision((revision) => revision + 1);
     },
     [getActiveCanvas, selectedObject, saveHistory]
   );
@@ -394,6 +398,20 @@ export function useCanvasState() {
     }
   }, [getActiveCanvas]);
 
+  const exportDesignFileData = useCallback((design: Design, pages: Page[]) => {
+    exportDesignFile(
+      { ...design, pages },
+      { getCanvasForPage: (pageId) => canvasMapRef.current.get(pageId) ?? null }
+    );
+  }, []);
+
+  const exportDesignImageFiles = useCallback(async (design: Design, pages: Page[]) => {
+    await exportDesignImages(
+      { ...design, pages },
+      { getCanvasForPage: (pageId) => canvasMapRef.current.get(pageId) ?? null }
+    );
+  }, []);
+
   // ── Serialization ───────────────────────────────────────────────────
 
   const getCanvasJSON = useCallback(() => {
@@ -501,6 +519,8 @@ export function useCanvasState() {
     zoomIn,
     zoomOut,
     exportPNG,
+    exportDesignFileData,
+    exportDesignImageFiles,
     getCanvasJSON,
     getCanvasJSONForPage,
     loadTemplate,

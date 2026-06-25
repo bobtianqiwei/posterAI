@@ -47,6 +47,8 @@ export interface EditorContextValue {
   zoomIn: () => void;
   zoomOut: () => void;
   exportPNG: () => void;
+  exportDesignFileData: (design: Design, pages: Page[]) => void;
+  exportDesignImageFiles: (design: Design, pages: Page[]) => Promise<void>;
   getCanvasJSON: () => string;
   getCanvasJSONForPage: (pageId: string) => string;
   loadTemplate: (template: Template) => void;

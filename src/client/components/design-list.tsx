@@ -1,5 +1,8 @@
 import { useState } from "preact/hooks";
-import { Trash2, Edit3, Plus } from "lucide-preact";
+import { Trash2, Edit3, Plus, FileDown, ImageDown } from "lucide-preact";
+import type { DesignWithPages } from "../types";
+import { api } from "../api";
+import { exportDesignFile, exportDesignImages } from "../export-training";
 import { useEditor } from "../context";
 
 export function DesignList() {
@@ -7,6 +10,7 @@ export function DesignList() {
     useEditor();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const startRename = (id: string, name: string) => {
     setEditingId(id);
@@ -16,6 +20,32 @@ export function DesignList() {
   const finishRename = () => {
     if (editingId && editName.trim()) renameDesign(editingId, editName.trim());
     setEditingId(null);
+  };
+
+  const exportDesignFileClick = async (id: string, e: Event) => {
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const design = await api<DesignWithPages>("GET", `/api/designs/${id}`);
+      exportDesignFile(design);
+    } catch (error) {
+      console.error("Failed to export design file:", error);
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const exportDesignImagesClick = async (id: string, e: Event) => {
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const design = await api<DesignWithPages>("GET", `/api/designs/${id}`);
+      await exportDesignImages(design);
+    } catch (error) {
+      console.error("Failed to export design images:", error);
+    } finally {
+      setExportingId(null);
+    }
   };
 
   return (
@@ -68,6 +98,22 @@ export function DesignList() {
             </div>
           )}
           <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+            <button
+              class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-800 transition-colors"
+              disabled={exportingId === d.id}
+              onClick={(e) => exportDesignFileClick(d.id, e)}
+              title="Export JSON"
+            >
+              <FileDown size={12} />
+            </button>
+            <button
+              class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-800 transition-colors"
+              disabled={exportingId === d.id}
+              onClick={(e) => exportDesignImagesClick(d.id, e)}
+              title="Export PNG"
+            >
+              <ImageDown size={12} />
+            </button>
             <button
               class="p-1 rounded text-zinc-400 bg-transparent border-none cursor-pointer hover:text-zinc-800 transition-colors"
               onClick={(e) => {
